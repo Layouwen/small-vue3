@@ -1,7 +1,9 @@
+import { extend } from './../shared/index'
 class ReactiveEffect {
   private _fn: any
   deps = []
   active = true
+  onStop?: () => void
   constructor(fn, public scheduler?) {
     this._fn = fn
   }
@@ -12,6 +14,9 @@ class ReactiveEffect {
   stop() {
     if (this.active) {
       cleanupEffect(this)
+      if (this.onStop) {
+        this.onStop()
+      }
       this.active = false
     }
   }
@@ -26,6 +31,7 @@ function cleanupEffect(effect) {
 export function effect(fn, options: any = {}) {
   const _effect = new ReactiveEffect(fn, options.scheduler)
   _effect.run()
+  extend(_effect, options)
   const runner: any = _effect.run.bind(_effect)
   runner.effect = _effect
   return runner
@@ -45,6 +51,9 @@ export function track(target, key) {
     deps = new Set()
     depsMap.set(key, deps)
   }
+
+  if (!activeEffect) return
+
   deps.add(activeEffect)
   activeEffect.deps.push(deps)
 }
