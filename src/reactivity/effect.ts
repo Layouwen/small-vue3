@@ -1,4 +1,8 @@
 import { extend } from './../shared/index'
+
+let activeEffect
+let shouldTrack
+
 class ReactiveEffect {
   private _fn: any
   deps = []
@@ -8,12 +12,23 @@ class ReactiveEffect {
     this._fn = fn
   }
   run() {
+    // 如果没有激活，直接执行 runner 则执行一次
+    if (!this.active) {
+      return this._fn()
+    }
+
     activeEffect = this
-    return this._fn()
+
+    // 每次只执行一次，然后取消跟踪状态
+    shouldTrack = true
+    const result = this._fn()
+    shouldTrack = false
+    return result
   }
   stop() {
     if (this.active) {
       cleanupEffect(this)
+      // 设置了 onStep 回调，则执行
       if (this.onStop) {
         this.onStop()
       }
@@ -26,6 +41,7 @@ function cleanupEffect(effect) {
   effect.deps.forEach((dep: any) => {
     dep.delete(effect)
   })
+  effect.deps.length = 0
 }
 
 export function effect(fn, options: any = {}) {
@@ -37,10 +53,10 @@ export function effect(fn, options: any = {}) {
   return runner
 }
 
-let activeEffect
-
 const targetMap = new Map()
 export function track(target, key) {
+  if (!isTracking()) return
+
   let depsMap = targetMap.get(target)
   if (!depsMap) {
     depsMap = new Map()
@@ -52,10 +68,17 @@ export function track(target, key) {
     depsMap.set(key, deps)
   }
 
-  if (!activeEffect) return
-
+  // 如果 deps 存在了就不需要继续收集
+  if (deps.has(activeEffect)) return
   deps.add(activeEffect)
   activeEffect.deps.push(deps)
+}
+
+/**
+ * 当前是否在跟踪
+ */
+function isTracking() {
+  return shouldTrack && activeEffect !== undefined
 }
 
 export function trigger(target, key) {
