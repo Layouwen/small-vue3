@@ -28,3 +28,7 @@ export function isReadonly(value) {
 function createActiveObject(raw, baseHandles) {
   return new Proxy(raw, baseHandles)
 }
+
+export function isProxy(value) {
+  return isReactive(value) || isReadonly(value)
+}

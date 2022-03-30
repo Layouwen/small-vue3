@@ -1,4 +1,4 @@
-import { isReactive, reactive } from '../index'
+import { isReactive, reactive, isProxy } from '../index'
 
 describe('reactive', () => {
   it('happy path', () => {
@@ -8,6 +8,7 @@ describe('reactive', () => {
     expect(bank.money).toBe(100)
     expect(isReactive(bank)).toBe(true)
     expect(isReactive(origin)).toBe(false)
+    expect(isProxy(bank)).toBe(true)
   })
 
   test('nested reactive', () => {
