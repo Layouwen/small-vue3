@@ -4,6 +4,6 @@ export const isObject = obj => {
   return obj !== null && typeof obj === 'object'
 }
 
-export const hasChange = (value, newVaule) => {
-  return !Object.is(value, newVaule)
+export const hasChange = (value, newValue) => {
+  return !Object.is(value, newValue)
 }
